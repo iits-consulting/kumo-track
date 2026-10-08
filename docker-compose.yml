@@ -1,0 +1,21 @@
+services:
+  kumo-track:
+    build: .
+    image: kumo-track
+    ports:
+      - "8080:8080"
+    environment:
+      # Needed once to download facebook/sam3 (gated model); cached afterwards.
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - hf-cache:/app/hf-cache   # SAM3 weights (~3.3 GB), downloaded at startup
+      # ...or reuse an already-populated host cache (no token/download needed):
+      # - ~/.cache/huggingface:/app/hf-cache:ro
+      - ./data:/app/data         # clips in data/videos/, exports in data/<name>/
+      - ./outputs:/app/outputs   # annotation DB + frame cache
+    # GPU box: build with --build-arg TORCH_INDEX=https://pypi.org/simple,
+    # install nvidia-container-toolkit on the host, then uncomment:
+    # gpus: all
+
+volumes:
+  hf-cache:

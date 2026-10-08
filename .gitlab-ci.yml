@@ -1,0 +1,58 @@
+# CI for kumo-track. uv-based, reproducible installs from uv.lock (--frozen).
+#
+# - test          fast suite: SQLite + fake tracker, no GPU/network. The gate.
+# - test:postgres runs the Postgres smoke test (tests/test_postgres.py) against a
+#                 real postgres:16 service, so the dialect-specific paths
+#                 (RETURNING id, ON CONFLICT, window query, identity PK, pool
+#                 checkout) are exercised on every pipeline — not just skipped.
+#
+# The local-tracker test needs torch + a GPU and is left skipping here; run it on
+# a GPU-tagged runner as a manual/scheduled job if wanted. A docker build/publish
+# job is a sensible follow-up once the runner type (docker-dind vs Kaniko) is known.
+
+stages: [test]
+
+default:
+  image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+  cache:                       # reuse uv's download cache, keyed on the lockfile
+    key:
+      files: [uv.lock]
+    paths: [.cache/uv]
+
+variables:
+  UV_CACHE_DIR: .cache/uv
+
+# Run on merge requests and on branch pushes, but don't double-run a branch that
+# already has an open MR.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+test:
+  stage: test
+  script:
+    - uv sync --frozen
+    - uv run pytest
+
+test:postgres:
+  stage: test
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_DB: test
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    KUMO_TEST_POSTGRES_URL: "postgresql://test:test@postgres:5432/test"
+  script:
+    - uv sync --frozen --extra postgres
+    # Wait for the service to accept connections (psycopg is now installed).
+    - |
+      for i in $(seq 1 30); do
+        uv run python -c "import psycopg; psycopg.connect('$KUMO_TEST_POSTGRES_URL').close()" 2>/dev/null && break
+        echo "waiting for postgres ($i/30)"; sleep 1
+      done
+    - uv run pytest tests/test_postgres.py -v

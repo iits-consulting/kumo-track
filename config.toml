@@ -1,0 +1,7 @@
+# kumo-track application config. Loaded once at startup (override the path with
+# the CONFIG_FILE env var). Per-clip / runtime knobs still live in .env.
+[annotation]
+# Mask storage/display mode (manual mode always offers brush + polygon + box tools):
+#   "polygon" — annotations keep a polygon outline, drawn as a filled outline
+#   "brush"   — the raster mask is source of truth, drawn as a tinted overlay
+edit_tool = "brush"

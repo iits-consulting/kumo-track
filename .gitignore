@@ -1,0 +1,15 @@
+inputs/
+outputs/
+samples/
+data/
+.venv/
+.env
+__pycache__/
+*.pyc
+
+*.egg-info/
+.ipynb_checkpoints
+
+# Tailwind standalone CLI + compiled CSS (rebuild: poe css)
+.tailwindcss-*
+src/kumo_track/annotate/static/css/app.build.css

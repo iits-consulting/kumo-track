@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iits · Annotation Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/app.build.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 137.51 137.51" xmlns="http://www.w3.org/2000/svg" aria-label="iits-consulting">
+      <rect x="42.65" y="68.34" width="82.47" height="55.9" fill="#fff"/>
+      <path fill="#d22720" d="M0,20v97.51c0,11.05,8.95,20,20,20h97.51c11.05,0,20-8.95,20-20V20c0-11.05-8.95-20-20-20H20C8.95,0,0,8.95,0,20ZM71.37,117.52h-6.49v-24.96h6.49v24.96ZM71.37,85.99c0,1.53-1.24,2.77-2.77,2.77h-.94c-1.53,0-2.77-1.24-2.77-2.77h0c0-1.53,1.24-2.77,2.77-2.77h.94c1.53,0,2.77,1.24,2.77,2.77h0ZM81.86,117.52h-6.49v-24.96h6.49v24.96ZM81.86,85.99c0,1.53-1.24,2.77-2.77,2.77h-.94c-1.53,0-2.77-1.24-2.77-2.77h0c0-1.53,1.24-2.77,2.77-2.77h.94c1.53,0,2.77,1.24,2.77,2.77h0ZM96.12,96.65h-3.76v13.67c0,1.97.42,2.77,2.3,2.77.49,0,.97-.04,1.46-.09v4.51c-1.41.14-2.73.28-4.23.28-5.08,0-6.02-1.55-6.02-6.67v-27.31h6.49v8.43h3.76v4.42ZM107.97,118.17c-7.28,0-9.3-3.2-9.3-8.04v-.89h5.82v.85c0,2.21,1.18,3.67,3.38,3.67,1.97,0,3.29-.99,3.29-3.01,0-1.64-1.09-2.4-2.35-2.87l-4.56-1.64c-3.57-1.27-5.4-3.48-5.4-7.05,0-4.18,2.63-7.61,9.31-7.61,5.87,0,8.65,2.63,8.65,7.19v1.03h-5.83c0-2.54-.75-3.81-2.87-3.81-1.64,0-3.05.94-3.05,2.73,0,1.22.66,2.26,2.82,2.96l3.91,1.32c4.09,1.36,5.59,3.43,5.59,7.24,0,5.31-3.95,7.94-9.4,7.94Z"/>
+    </svg>
+    <span class="name"><b>Annotation Studio</b><small>SAM3 video labeling</small></span>
+  </div>
+  <button id="clipBtn" class="btn sm clip-btn" title="Open or switch clip">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+    <span id="clipBtnLabel">Open clip</span><span id="clipBtnMeta" class="meta"></span>
+  </button>
+  <div class="header-actions">
+    <button id="finishBtn" class="btn sm" style="display:none" title="Finish — back to the clip list"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Finished</button>
+    <button id="exportBtn" class="btn sm" title="Export images + labels.json"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+    <button id="settingsBtn" class="btn icon sm" title="Settings" aria-label="Settings"></button>
+    <button id="helpBtn" class="btn icon sm" title="Help & shortcuts (?)" aria-label="Help"></button>
+  </div>
+</header>
+
+<main>
+  <div id="stage">
+    <div class="stage-wrap" id="stageWrap">
+      <canvas id="cv" width="960" height="540"></canvas>
+      <div class="toolstrip" id="toolstrip" style="display:none">
+        <button id="modeManual" data-mode="manual" aria-pressed="true" title="Manual mode — select, brush, box (V)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 4 7 16 2-7 7-2z"/></svg></button>
+        <button id="modeAI" data-mode="ai" aria-pressed="false" title="AI-assisted mode — prompt SAM3"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M17.8 6.2 19 5M12.2 6.2 11 5M3 21l9-9"/></svg></button>
+        <div class="sep"></div>
+        <span id="manualTools" class="tool-group">
+          <button data-tool="brush" title="Brush — paint this frame's mask (B)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button data-tool="poly" title="Polygon — click to outline a mask, drag vertices to adjust (P)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.83 2.38a2 2 0 0 1 2.34 0l8 5.74a2 2 0 0 1 .73 2.25l-3.04 9.26a2 2 0 0 1-1.9 1.37H7.04a2 2 0 0 1-1.9-1.37L2.1 10.37a2 2 0 0 1 .73-2.25z"/></svg></button>
+          <button data-tool="mbox" title="Box — draw a bounding box on this frame (coordinates only, no mask)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M16.5 8.5 8.5 16.5"/></svg></button>
+        </span>
+        <span id="aiTools" class="tool-group off">
+          <button data-tool="pos" title="Add point on object (1)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></button>
+          <button data-tool="neg" title="Add exclude point (2)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></button>
+          <button data-tool="box" title="Drag a prompt box (3)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>
+          <div class="sep"></div>
+          <button id="segBtn" title="Predict — run SAM3 on the staged points/box (Enter)" disabled><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5z"/></svg></button>
+        </span>
+        <div class="sep"></div>
+        <button id="undoBtn" title="Undo — brush stroke / polygon edit in manual mode, else last staged point/box (Ctrl+Z, U)" disabled><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/></svg></button>
+        <button id="redoBtn" title="Redo — undone manual edit, else undone point/box (Ctrl+Y, Ctrl+Shift+Z)" disabled><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13"/></svg></button>
+      </div>
+      <div class="brushbar" id="brushbar" style="display:none">
+        <button id="brushPaint" class="bb-btn" aria-pressed="true" title="Paint — add to the mask"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        <button id="brushErase" class="bb-btn" aria-pressed="false" title="Erase — remove from the mask (or hold Alt)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></button>
+        <div class="bb-sep"></div>
+        <button id="brushMinus" class="bb-btn" title="Smaller brush ( [ )"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button>
+        <span id="brushSizeVal" class="bb-size" title="Brush size (screen px)">28</span>
+        <button id="brushPlus" class="bb-btn" title="Larger brush ( ] )"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg></button>
+      </div>
+      <div class="stage-hud" id="stageHud" style="display:none">
+        <span id="modePill" class="hud-pill"><span class="sw" id="modeSw"></span><span id="modeTxt">no object</span></span>
+        <span id="doneBtn" class="hud-pill btn-like done" style="display:none" title="Finish — save this annotation and return to the pointer (Enter / Esc)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Done</span></span>
+        <span id="sam3Pill" class="hud-pill" style="display:none" title="The SAM3 service is starting up — prediction is disabled until it's ready; manual tools keep working"><svg class="ic spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><span id="sam3PillText">GPU starting up (~2 min)…</span></span>
+        <span id="zoomPill" class="hud-pill btn-like" style="display:none" title="Reset zoom (Ctrl+0)">100%</span>
+      </div>
+      <div class="stage-empty" id="stageEmpty">No clip open — click <b>Open clip</b> to begin.</div>
+    </div>
+
+    <div class="bottombar" id="bottombar" style="display:none">
+      <div class="timeline">
+        <div id="cov" class="cov"><div class="play" id="play" style="left:0"></div></div>
+        <input id="scrub" type="range" min="0" max="0" value="0">
+      </div>
+      <div class="transport">
+        <div class="nav">
+          <button id="prev" class="btn icon sm" title="Previous frame (←)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+          <button id="next" class="btn icon sm" title="Next frame (→)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+        <span id="frameInfo" class="frame-readout">— / —</span>
+        <div class="track-group">
+          <span class="prop-info" id="propInfo"></span>
+          <button id="trackBack" class="btn icon sm" title="Track backward N frames"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></svg></button>
+          <div class="track-steps"><input id="trackN" type="number" min="1" value="50" title="frames to track"></div>
+          <button id="trackFwd" class="btn icon sm primary" title="Track forward N frames (Space)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5M13 17l5-5-5-5"/></svg></button>
+          <button id="trackMore" class="btn icon sm" title="More: whole clip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+          <button id="stopBtn" class="btn icon sm danger" title="Stop tracking (Esc)" style="display:none"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside id="panel" style="display:none">
+    <div class="panel-card">
+      <h3>Objects</h3>
+      <div class="new-obj">
+        <input id="labelInput" list="labelOptions" placeholder="label…" autocomplete="off" title="Type a label, press Enter to add an object">
+        <datalist id="labelOptions"></datalist>
+        <button id="newObj" class="btn" title="Add object (Enter)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg></button>
+        <button id="findBtn" class="btn icon" title="Find all instances on this frame"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+      </div>
+      <div class="obj-list" id="objList"></div>
+    </div>
+  </aside>
+</main>
+
+<div id="toasts"></div>
+<div id="tip"></div>
+
+<!-- Open / switch clip -->
+<div id="openModal" class="overlay">
+  <div class="modal">
+    <button class="btn icon sm ghost close" data-close="openModal" aria-label="Close"></button>
+    <h2>Open a clip</h2>
+    <p class="sub">SAM3 tracks objects you seed on one frame across the whole clip.</p>
+    <div class="row">
+      <label class="field" style="flex:2">Source clip
+        <select id="videoSel" title="Clips in VIDEO_DIR"></select>
+      </label>
+      <button id="uploadBtn" class="btn" title="Upload a video"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload</button>
+      <input id="fileInput" type="file" accept="video/*" style="display:none">
+    </div>
+    <div class="row">
+      <button id="openGo" class="btn primary wide" title="Decode and start annotating"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>Open clip</button>
+    </div>
+    <div id="openHint" class="hint"></div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="settingsModal" class="overlay">
+  <div class="modal">
+    <button class="btn icon sm ghost close" data-close="settingsModal" aria-label="Close"></button>
+    <h2>Settings</h2>
+    <div class="sec">
+      <h3>Display</h3>
+      <div class="setting-row">
+        <label for="setColorMode">Box colour</label>
+        <select id="setColorMode">
+          <option value="category">By category — same label, same colour</option>
+          <option value="instance">By instance — unique colour per object</option>
+        </select>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>Decoding</h3>
+      <div class="setting-row">
+        <label for="setStride">Frame stride</label>
+        <div class="slider-wrap"><input type="range" id="setStride" min="1" max="30" step="1" value="5"><span class="val" id="setStrideVal">5</span></div>
+        <span class="hint">Sample every Nth source frame. Changing this re-opens the clip as a new dataset.</span>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>Find all</h3>
+      <div class="setting-row">
+        <label for="setFindDetector">Detector</label>
+        <select id="setFindDetector"><option value="sam3">SAM3 (recommended)</option><option value="owlv2">OWLv2</option></select>
+      </div>
+      <div class="setting-row">
+        <label for="setFindThreshold">Confidence threshold</label>
+        <div class="slider-wrap"><input type="range" id="setFindThreshold" min="0.01" max="0.99" step="0.01" value="0.50"><span class="val" id="setFindThresholdVal">0.50</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Export -->
+<div id="exportModal" class="overlay">
+  <div class="modal">
+    <button class="btn icon sm ghost close" data-close="exportModal" aria-label="Close"></button>
+    <h2>Export dataset</h2>
+    <p class="sub">Writes to <b>data/&lt;name&gt;/</b> on the server.</p>
+    <div class="row">
+      <label class="field">Dataset name
+        <input id="expName" type="text" placeholder="my-dataset" autocomplete="off">
+      </label>
+    </div>
+    <div class="sec">
+      <h3>Contents</h3>
+      <label class="radio-row"><input type="radio" name="expMode" value="full" checked>
+        <span><b>Images + labels.json</b><small>Annotated frames as JPEGs alongside the labels.</small></span></label>
+      <label class="radio-row"><input type="radio" name="expMode" value="labels">
+        <span><b>labels.json only</b><small>Just the labels, keyed by frame filename.</small></span></label>
+    </div>
+    <div class="row">
+      <button id="expGo" class="btn primary wide"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+    </div>
+    <div id="expInfo" class="hint"></div>
+  </div>
+</div>
+
+<!-- Help -->
+<div id="helpModal" class="overlay">
+  <div class="modal">
+    <button class="btn icon sm ghost close" data-close="helpModal" aria-label="Close"></button>
+    <h2>How it works</h2>
+    <p class="sub">Seed one object on one frame, then track it across the clip.</p>
+    <div class="help-cols">
+    <div>
+    <div class="sec">
+      <h3>Workflow</h3>
+      <ol class="help-steps">
+        <li>Pick a mode in the toolstrip: <b>pointer</b> = manual, <b>wand</b> = AI-assisted (SAM3). With no object selected, drawing creates one called “object” — rename it in the panel.</li>
+        <li><b>AI mode:</b> click the object with <b>+</b> (or drag a <b>box</b>), then press <b>Predict</b> ✦ or <b>Enter</b>. Track <b>◀ N ▶</b> frames or the whole clip — <b>Stop</b> anytime.</li>
+        <li><b>Manual mode:</b> paint with the <b>brush</b>, outline with the <b>polygon</b>, or drag a <b>box</b> — saved to this frame only, and used as a SAM3 seed when you track from here. Finish an edit with <b>✓ Done</b>, <b>Enter</b>, or <b>Esc</b>.</li>
+        <li>Fix frames with the <b>pointer</b> (drag / resize / rotate) or the brush, then <b>Export</b>.</li>
+      </ol>
+    </div>
+    <div class="sec">
+      <h3>Manual tools <span id="activeEditTool" class="tool-badge" hidden></span></h3>
+      <div class="help-list">
+        <div class="li"><span class="k"><b>Brush</b></span><span>Paint to add. A toolbar appears on the canvas: toggle the <b>eraser</b> and tap <b>−/+</b> to resize — or use <b>Alt</b>-drag to erase and <span class="kbd">[</span><span class="kbd">]</span> to resize. Leaving the brush saves the mask.</span></div>
+        <div class="li"><span class="k"><b>Polygon</b></span><span>Click to outline a mask vertex by vertex · drag a vertex to move · click an edge dot to insert · <b>Alt</b>- or right-click a vertex to delete. Saved as a mask on leaving the tool.</span></div>
+        <div class="li"><span class="k"><b>Box</b></span><span>Drag to save a bounding box on this frame — coordinates only, never a mask. Move / resize / rotate it later with the pointer.</span></div>
+      </div>
+    </div>
+    </div>
+    <div>
+    <div class="sec">
+      <h3>Keyboard</h3>
+      <div class="help-list" id="keymapList"></div>
+      <div class="help-list" style="margin-top:8px">
+        <div class="li"><span class="k"><span class="kbd">Esc</span></span><span>stop tracking / finish edit / close overlays &amp; menus</span></div>
+        <div class="li"><span class="k"><span class="kbd">Ctrl</span></span><span>+ scroll zoom · + drag pan</span></div>
+        <div class="li"><span class="k"><span class="kbd">Alt</span></span><span>+ drag erase (brush)</span></div>
+      </div>
+      <button id="keymapReset" class="btn sm ghost" style="margin-top:12px" title="Clear all custom bindings">Reset to defaults</button>
+    </div>
+    </div>
+    </div>
+    <p class="hint">A <span style="color:var(--sea-green);font-weight:700">●</span> on an object means it's live in the tracker. After reopening a clip, seed an object again before tracking it. Boxes with an <span style="color:var(--manual);font-weight:700">amber</span> accent were hand-edited and won't be overwritten by tracking. Pinned (static) objects aren't tracked — their box is copied to every frame you track over.</p>
+  </div>
+</div>
+
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

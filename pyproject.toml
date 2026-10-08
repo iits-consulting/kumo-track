@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kumo-track"
+version = "0.1.0"
+description = "SAM3-assisted video annotation: seed an object on one frame, propagate the mask across the clip, export a labeled dataset."
+requires-python = ">=3.12"
+dependencies = [
+    "Pillow>=10.0",
+    "opencv-python-headless>=4.8",
+    "numpy>=2.0",
+    "python-dotenv>=1.0",
+    # fastapi/uvicorn serve the app, python-multipart handles in-app clip uploads,
+    # httpx is the client for the hosted SAM3 service (and FastAPI's TestClient).
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+# In-process SAM 3 inference (local GPU). Omit to run purely against the hosted
+# SAM3 service (set SAM3_URL); the app imports torch-free without these. SAM3's
+# video tracker needs transformers 5.x.
+local = [
+    "torch>=2.0",
+    "torchvision>=0.27.0",
+    "transformers>=5.0",
+]
+# Deployment backends: a concurrent, multi-writer metadata store (Azure Database
+# for PostgreSQL via a psycopg connection pool) and Azure Blob for videos/exports.
+# Dev and the test suite run on SQLite + local FS and need neither.
+postgres = [
+    "psycopg[binary]>=3.1",
+    "psycopg-pool>=3.2",
+]
+azure = [
+    "azure-storage-blob>=12.19",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+# Task runner (https://poethepoet.natn.io/). Install poe outside this env
+# (`uv tool install poethepoet`) so `uv run poe` never strips deps; flags after
+# the task name pass through to the script, e.g. `poe annotate` honours PORT.
+[tool.poe.tasks.sync]
+help = "Install the app (CPU-only; talks to the hosted SAM3 service via SAM3_URL)"
+cmd  = "uv sync"
+
+[tool.poe.tasks.sync-local]
+help = "Install with in-process SAM 3 inference (local GPU: torch + transformers 5.x)"
+cmd  = "uv sync --extra local"
+
+[tool.poe.tasks.annotate]
+help = "Start the SAM3 video annotation app (annotate_app.py)"
+cmd  = "uv run python scripts/annotate_app.py"
+
+[tool.poe.tasks.css]
+help = "Compile the frontend CSS (Tailwind standalone CLI, no Node; add --watch for UI work)"
+cmd  = "scripts/build-css.sh"
+
+[tool.poe.tasks.test]
+help = "Run the test suite (no GPU / SAM3 weights needed)"
+cmd  = "uv run pytest"

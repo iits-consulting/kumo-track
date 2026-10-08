@@ -1,0 +1,14 @@
+.git
+.venv
+**/__pycache__
+*.pyc
+*.egg-info
+# built inside the image (css stage); a stale local copy must not ride along
+src/kumo_track/annotate/static/css/app.build.css
+data
+outputs
+tests
+.env
+Dockerfile
+docker-compose.yml
+README.md
