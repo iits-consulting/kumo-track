@@ -1,4 +1,4 @@
-# kumo-track
+# Kumo Track
 
 SAM3-assisted **video annotation**: annotate objects by hand (brush, polygon,
 or box — per frame) or seed SAM3 with visual prompts and let its video tracker
